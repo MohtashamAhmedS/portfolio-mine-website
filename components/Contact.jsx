@@ -8,12 +8,14 @@ import FillHeading from './FillHeading'
 
 export default function Contact() {
   const [status, setStatus] = useState('idle') // idle | sending | sent | error
+  const [errorMsg, setErrorMsg] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
     const form = e.currentTarget
     const data = Object.fromEntries(new FormData(form))
     setStatus('sending')
+    setErrorMsg('')
 
     try {
       const res = await fetch('/api/contact', {
@@ -21,10 +23,12 @@ export default function Contact() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!res.ok) throw new Error('Request failed')
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'Request failed')
       form.reset()
       setStatus('sent')
-    } catch {
+    } catch (err) {
+      setErrorMsg(err.message || 'Something went wrong. Please try again.')
       setStatus('error')
     }
   }
@@ -77,8 +81,7 @@ export default function Contact() {
             <div className="flex items-center justify-between gap-4">
               <p role="status" className="text-sm text-black sm:text-base">
                 {status === 'sent' && 'Thanks! I will get back to you soon.'}
-                {status === 'error' &&
-                  'Something went wrong. Please try again.'}
+                {status === 'error' && errorMsg}
               </p>
 
               <SketchButton
@@ -100,6 +103,7 @@ export default function Contact() {
             alt="Sketch illustration of mountains reflected in a lake"
             width={700}
             height={560}
+            priority
             className="h-auto w-full max-w-[420px] md:max-w-full"
           />
         </div>

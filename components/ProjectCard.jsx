@@ -9,10 +9,15 @@ export default function ProjectCard({
   href = '#',
   onHover,
 }) {
+  const isExternal = /^https?:\/\//.test(href)
+
   return (
     <li className="border-b border-black" onMouseEnter={onHover}>
       <Link
         href={href}
+        {...(isExternal
+          ? { target: '_blank', rel: 'noopener noreferrer' }
+          : {})}
         className="group block bg-transparent transition-colors duration-500 ease-out hover:bg-black/[0.07] focus-visible:bg-black/[0.07]"
       >
         <div className="flex flex-col gap-3 px-4 py-5 transition-transform duration-500 ease-out group-hover:translate-x-2 group-focus-visible:translate-x-2 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10 lg:py-6">

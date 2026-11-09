@@ -1,7 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
+import { useRef, useState } from 'react'
 import SketchButton from './SketchButton'
 import ProjectCard from './ProjectCard'
 import FillHeading from './FillHeading'
@@ -12,7 +11,7 @@ const projects = [
     description: 'Property management software',
     tags: ['Next.js', 'Supabase', 'UI/UX'],
     year: '2025',
-    href: '#',
+    href: 'https://property-portfolio-management.vercel.app/',
     image: '/projects/portfolio.png',
   },
   {
@@ -28,7 +27,7 @@ const projects = [
     description: 'API based legal document analyzer.',
     tags: ['Next.js', 'Supabase', 'UI/UX'],
     year: '2025',
-    href: '#',
+    href: 'https://www.loom.com/share/84b6f8e1891942c2ac9dbf57b41454d6',
     image: '/projects/legallens.png',
   },
   {
@@ -36,7 +35,7 @@ const projects = [
     description: 'Ecommerce website',
     tags: ['Next.js', 'Supabase', 'UI/UX'],
     year: '2025',
-    href: '#',
+    href: 'https://sufiyanathreads.com/',
     image: '/projects/sufiyana-thread.png',
   },
   {
@@ -47,19 +46,33 @@ const projects = [
     href: '#',
     image: '/projects/alarfajlaw.png',
   },
+  {
+    title: 'AirPass',
+    description: 'QR Boarding Pass in Seconds',
+    tags: ['Node.js', 'Stripe', 'UI/UX'],
+    year: '2025',
+    href: 'https://airpass-flight-detail-qrcode-b5ww.vercel.app/',
+    image: '/projects/airpass.png',
+  },
 ]
 
-const PREVIEW_W = 300
-const PREVIEW_H = 220
+const PREVIEW_W = 340 // fixed preview width in px (height follows the image)
+const EDGE = 16 // min gap from the top/bottom of the screen
 
 export default function Work() {
-  const [active, setActive] = useState(null)
+  const [active, setActive] = useState(null) // hovered row (null = none)
+  const [current, setCurrent] = useState(0) // last hovered row, keeps the box sized while fading out
   const [pos, setPos] = useState({ x: 0, y: 0 })
+  const boxRef = useRef(null)
 
   const handleMove = (e) => {
+    const h = boxRef.current?.offsetHeight || 0
     const onRight = e.clientX + 24 + PREVIEW_W > window.innerWidth
     const x = onRight ? e.clientX - 24 - PREVIEW_W : e.clientX + 24
-    const y = e.clientY - PREVIEW_H / 2
+
+    // center on the cursor, but keep the box on screen (tall images start at the top)
+    const maxY = window.innerHeight - h - EDGE
+    const y = Math.max(EDGE, Math.min(e.clientY - h / 2, maxY))
     setPos({ x, y })
   }
 
@@ -94,32 +107,39 @@ export default function Work() {
             tags={project.tags}
             year={project.year}
             href={project.href}
-            onHover={() => setActive(i)}
+            onHover={() => {
+              setActive(i)
+              setCurrent(i)
+            }}
           />
         ))}
       </ul>
 
-      {/* Cursor-following preview (desktop only) */}
+      {/* Cursor-following preview (desktop only, fixed width, full image, no cropping) */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed left-0 top-0 z-40 hidden transition-transform duration-300 ease-out md:block"
         style={{ transform: `translate3d(${pos.x}px, ${pos.y}px, 0)` }}
       >
         <div
-          className={`relative overflow-hidden rounded-md border border-black bg-[#F0E4CA] shadow-lg transition-all duration-500 ease-out ${
+          ref={boxRef}
+          className={`relative overflow-hidden rounded-md border border-black bg-[#F0E4CA] shadow-lg transition-[opacity,scale] duration-500 ease-out ${
             active !== null ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
           }`}
-          style={{ width: PREVIEW_W, height: PREVIEW_H }}
+          style={{ width: PREVIEW_W }}
         >
           {projects.map((project, i) => (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               key={project.title}
               src={project.image}
               alt=""
-              fill
-              sizes="300px"
-              className={`object-cover transition-opacity duration-500 ease-out ${
-                active === i ? 'opacity-100' : 'opacity-0'
+              draggable={false}
+              style={{ width: '100%', height: 'auto' }}
+              className={`block transition-opacity duration-500 ease-out ${
+                current === i
+                  ? 'relative opacity-100'
+                  : 'absolute left-0 top-0 opacity-0'
               }`}
             />
           ))}
